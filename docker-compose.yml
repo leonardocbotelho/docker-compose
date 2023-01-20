@@ -1,0 +1,101 @@
+version: '3.9'
+
+volumes:
+  rabbitmq_data:
+
+services:
+  rabbitmq:
+    container_name: rabbitmq
+    hostname: rabbitmq-development
+    image: rabbitmq:3-management-alpine
+    volumes:
+      - 'rabbitmq_data:/var/lib/rabbitmq'
+    environment:
+      RABBITMQ_DEFAULT_USER: 'guest'
+      RABBITMQ_DEFAULT_PASS: 'guest'
+      RABBITMQ_DEFAULT_VHOST: '/'
+    ports:
+      - '5672:5672'
+      - '15672:15672'
+    networks:
+      - local
+
+  zookeeper:
+    container_name: zookeeper
+    image: confluentinc/cp-zookeeper:latest
+    environment:
+      ZOOKEEPER_CLIENT_PORT: '2181'
+      ZOOKEEPER_ADMIN_ENABLE_SERVER: 'false'
+    ports:
+      - '2181:2181'
+    networks:
+      - local
+
+  kafka_broker:
+    container_name: kafka_broker
+    image: confluentinc/cp-kafka:latest
+    environment:
+      KAFKA_BROKER_ID: '0'
+      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+      KAFKA_ADVERTISED_LISTENERS: 'PLAINTEXT://host.docker.internal:9092'
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: '1'
+      KAFKA_JMX_PORT: '9091'
+      KAFKA_ALLOW_EVERYONE_IF_NO_ACL_FOUND: 'true'
+    ports:
+      - '9092:9092'
+    depends_on:
+      - zookeeper
+    links:
+      - zookeeper     
+    networks:
+      - local
+
+  akhq_local:
+    container_name: akhq_local
+    image: tchiotludo/akhq:latest
+    environment:
+      AKHQ_CONFIGURATION: |
+        micronaut:
+          security:
+            enabled: false
+            ldap:
+              default:
+                enabled: false
+        
+        akhq:
+          connections:
+            development:
+              properties:
+                bootstrap.servers: kafka_broker:9092
+    ports:
+      - 9000:8080
+    depends_on:
+      - kafka_broker
+    links:
+      - kafka_broker
+    networks:
+      - local
+
+  kowl_local:
+    container_name: kowl_local
+    image: quay.io/cloudhut/kowl:master
+    environment:
+      KAFKA_BROKERS: 'kafka_broker:9092'
+    ports:
+      - 9100:8080
+    depends_on:
+      - kafka_broker
+    links:
+      - kafka_broker
+    networks:
+      - local
+
+  mysql:
+    container_name: mysql
+    image: mysql/mysql-server:latest
+    environment:
+      MYSQL_ROOT_PASSWORD: 'abcd1234'
+
+networks:
+  local:
+    driver: bridge
