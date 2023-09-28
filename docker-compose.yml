@@ -2,6 +2,9 @@ version: '3.9'
 
 volumes:
   rabbitmq_data:
+  mysql_data:
+  postgres_data:
+  
 
 services:
   rabbitmq:
@@ -50,6 +53,34 @@ services:
     networks:
       - local
 
+  ksqldb-server:
+    container_name: ksqldb-server
+    image: confluentinc/ksqldb-server:latest
+    environment:
+      KSQL_LISTENERS: http://0.0.0.0:8088
+      KSQL_BOOTSTRAP_SERVERS: kafka_broker:9092
+      KSQL_KSQL_LOGGING_PROCESSING_STREAM_AUTO_CREATE: "true"
+      KSQL_KSQL_LOGGING_PROCESSING_TOPIC_AUTO_CREATE: "true"
+    healthcheck:
+      test: curl -f http://ksqldb-server:8088/ || exit 1
+    ports:
+      - "8088:8088"
+    depends_on:
+      - kafka_broker
+    networks:
+      - local
+      
+  ksqldb-cli:
+    container_name: ksqldb-cli
+    image: confluentinc/ksqldb-cli:latest
+    depends_on:
+      - kafka_broker
+      - ksqldb-server
+    entrypoint: /bin/sh
+    tty: true
+    networks:
+      - local
+
   akhq_local:
     container_name: akhq_local
     image: tchiotludo/akhq:latest
@@ -93,8 +124,20 @@ services:
   mysql:
     container_name: mysql
     image: mysql/mysql-server:latest
+    volumes:
+      - mysql_data:/var/lib/mysql
     environment:
       MYSQL_ROOT_PASSWORD: 'abcd1234'
+
+  postgres:
+    container_name: postgres
+    restart: always
+    image: postgres:latest
+    volumes:
+      - postgres_data:/var/lib/postgresql
+    environment:
+      POSTGRES_PASSWORD: postgres
+
 
 networks:
   local:

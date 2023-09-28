@@ -4,3 +4,4 @@
 - RabbitMQ
 - Kafka
 - MySQL
+- PostgreSQL
