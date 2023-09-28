@@ -40,8 +40,10 @@ services:
     environment:
       KAFKA_BROKER_ID: '0'
       KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
-      KAFKA_ADVERTISED_LISTENERS: 'PLAINTEXT://host.docker.internal:9092'
+      KAFKA_ADVERTISED_LISTENERS: 'PLAINTEXT://192.168.1.4:9092' #Atualizar com o HOST ou IP da máquina onde está o Docker que será acessado.
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: '1'
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: '1'
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: '1'
       KAFKA_JMX_PORT: '9091'
       KAFKA_ALLOW_EVERYONE_IF_NO_ACL_FOUND: 'true'
     ports:
