@@ -128,16 +128,19 @@ services:
       - mysql_data:/var/lib/mysql
     environment:
       MYSQL_ROOT_PASSWORD: 'abcd1234'
+    ports:
+      - 3306:3306
 
   postgres:
     container_name: postgres
-    restart: always
     image: postgres:latest
     volumes:
       - postgres_data:/var/lib/postgresql
     environment:
+      POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-
+    ports:
+      - 5432:5432
 
 networks:
   local:
