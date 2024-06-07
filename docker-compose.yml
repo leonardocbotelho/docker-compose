@@ -1,9 +1,8 @@
-version: '3.9'
-
 volumes:
   rabbitmq_data:
   mysql_data:
   postgres_data:
+  mongodb_data:
   
 
 services:
@@ -51,7 +50,7 @@ services:
     depends_on:
       - zookeeper
     links:
-      - zookeeper     
+      - zookeeper
     networks:
       - local
 
@@ -69,17 +68,6 @@ services:
       - "8088:8088"
     depends_on:
       - kafka_broker
-    networks:
-      - local
-      
-  ksqldb-cli:
-    container_name: ksqldb-cli
-    image: confluentinc/ksqldb-cli:latest
-    depends_on:
-      - kafka_broker
-      - ksqldb-server
-    entrypoint: /bin/sh
-    tty: true
     networks:
       - local
 
@@ -143,6 +131,28 @@ services:
       POSTGRES_PASSWORD: postgres
     ports:
       - 5432:5432
+
+  mongodb:
+    container_name: mongodb
+    image: mongodb/mongodb-community-server:latest
+    volumes:
+      - mongodb_data:/data/db
+    ports:
+      - 27017:27017
+
+  mongo-express:
+    image: mongo-express
+    container_name: mongo-express
+    restart: always
+    ports:
+      - 9200:8081
+    environment:
+      ME_CONFIG_MONGODB_SERVER: mongodb
+      ME_CONFIG_BASICAUTH_USERNAME: mongodb
+      ME_CONFIG_BASICAUTH_PASSWORD: mongodb
+      ME_CONFIG_MONGODB_URL: mongodb://@mongodb:27017/
+    depends_on:
+      - mongodb
 
 networks:
   local:
